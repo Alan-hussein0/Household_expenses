@@ -2,71 +2,59 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\BaseController as BaseController;
+use App\Http\Resources\ProductResouce;
+use App\Models\AccountPages;
+use App\Models\Except;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Validator;
+use Illuminate\Support\Facades\Auth;
 
-class ProductController extends Controller
+class ProductController extends BaseController
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public function index()
     {
-        //
+        $product = Product::all();
+        return $this->sendResponse(ProductResouce::collection($product),'product retreived successfully');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+
     public function store(Request $request)
     {
-        //
+        $input = $request->except('except');
+        $validator = Validator::make($input,[
+            'name' => 'required',
+            'price' => 'required',
+            'amount' => 'required'
+        ]);
+
+
+        if ($validator->fails()) {
+            return $this->sendError('Validat error',$validator->errors());
+        }
+
+
+        $input['user_id'] = Auth::id();
+        $input['account_pages_id'] = AccountPages::whereNull('reckoning')->first()->id;
+        $input['calculated'] = $input['price']*$input['amount'];
+
+        $product = Product::create($input);
+
+        return $this->sendResponse(new ProductResouce($product),'The product add successfully');
+
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
+
     public function show(Product $product)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Product $product)
-    {
-        //
-    }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, Product $product)
     {
         //
@@ -78,8 +66,15 @@ class ProductController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Product $product)
+    public function destroy(Product $product,User $user)
     {
-        //
+        $errorMessage = [];
+
+        if ($user->id != Auth::id()) {
+            return $this->sendError('you do not have right',$errorMessage);
+        }
+
+        $product->delete();
+        return $this->sendResponse(new ProductResouce($product),'the product deleted successfully!');
     }
 }

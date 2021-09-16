@@ -16,7 +16,7 @@ class CreateAccountPagesTable extends Migration
         Schema::create('account_pages', function (Blueprint $table) {
             $table->id();
             $table->string('page');
-            $table->double('reckoning');
+            $table->double('reckoning')->nullable();
             $table->timestamps();
         });
     }

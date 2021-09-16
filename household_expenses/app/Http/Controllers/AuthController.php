@@ -20,14 +20,14 @@ class AuthController extends BaseController
             'password'=>'required',
             'c_password'=>'required|same:password'
         ]);
-if ($validator->fails()) {
-    return $this->sendError('Validate error',$validator->errors());
-}
+        if ($validator->fails()) {
+            return $this->sendError('Validate error',$validator->errors());
+        }
 
-$message=[];
-if (User::where('email',$request->email)->first()) {
-    return $this->sendError('this email address is not available. choose a different address',$message);
-}
+        $message=[];
+        if (User::where('email',$request->email)->first()) {
+            return $this->sendError('this email address is not available. choose a different address',$message);
+        }
 
 
         $input['password'] = Hash::make($input['password']);
